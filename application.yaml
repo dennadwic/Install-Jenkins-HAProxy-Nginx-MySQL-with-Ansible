@@ -2,17 +2,6 @@
 - hosts: jenkins
   become: yes
   tasks:
-  - name: Transfer The Script
-    template:
-      src: bash/dependency-jenkins.sh
-      dest: /var/tmp/
-      owner: root
-      group: root
-      mode: '0777'
-
-  - name: Excetu The Script
-    command: sh /var/tmp/dependency-jenkins.sh
-
   - name: Import Jenkins GPG Key
     apt_key:
       url: "https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key"
@@ -44,6 +33,15 @@
       name: jenkins
       enabled: true
       state: started
+
+  - name: Get init password Jenkins
+    shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+    changed_when: false
+    register: result
+
+  - name: Print init password Jenkins
+    debug:
+      var: result.stdout
 
 - hosts: haproxy
   become: yes
@@ -91,7 +89,7 @@
 
   - name: "sync website"
     synchronize:
-      src: site/inventory
+      src: site/
       dest: /var/www/{{ domain }}
       archive: no
       checksum: yes
